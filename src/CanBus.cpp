@@ -165,6 +165,7 @@ long CanBus::handleFrame(CAN_FRAME frame)
       break;
     case 0x526: // 1W
       collectors[settingsCollectors.getCollectorIndex(POWER)]->handle((int)v, ts);
+      collectors[settingsCollectors.getCollectorIndex(POWER10)]->handle((int)v, ts);
       break;
     case 0x527: // 1As - Ampere hour counter As
       collectors[settingsCollectors.getCollectorIndex(CURRENTCOUNTER)]->handle((int)v, ts);

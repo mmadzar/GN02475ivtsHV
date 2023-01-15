@@ -15,6 +15,7 @@
 #define VOLTAGE "voltage"
 #define TEMPERATURE "temperature"
 #define POWER "power"
+#define POWER10 "power10" // 10 times in a second
 #define CURRENTCOUNTER "currentCounter"
 #define ENERGYCOUNTER "energyCounter"
 
@@ -72,12 +73,13 @@ struct Settings
       {"Cell23", 5000},
       {"Cell24", 5000}};
 
-#define CollectorCount 6
+#define CollectorCount 7
   CollectorConfig collectors[CollectorCount] = {
       {CURRENT, 500},        // mA
       {VOLTAGE, 500},        // mV
       {TEMPERATURE, 500},    // 0.1 C degrees - Shunt temperature C degrees
       {POWER, 500},          // 1W
+      {POWER10, 100},          // 1W
       {CURRENTCOUNTER, 500}, // 1As current counter
       {ENERGYCOUNTER, 500}}; // 1Wh energy counter
 
