@@ -14,7 +14,7 @@ struct Status : public StatusBase
   String bmsCommand = "";
   bool running = false;
   int collectors[CollectorCount];
-  int switches[SwitchCount]{-1, -1};
+  int switches[SwitchCount]{0, 0};
 
   // BMS
   byte serialBytes[2048];

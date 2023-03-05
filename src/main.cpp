@@ -32,8 +32,8 @@ int lastVacuumRead = 0;
 
 void setup()
 {
-  SETTINGS.loadSettings();
   pwmCtrl.setup(mqtt);
+  SETTINGS.loadSettings();
   Serial.begin(115200);
   Serial.println("Serial started!");
   pinMode(settings.led, OUTPUT);
@@ -49,6 +49,7 @@ void setup()
 void loop()
 {
   status.currentMillis = millis();
+  pwmCtrl.handle();
   if (status.currentMillis - lastLoopReport > 1000) // number of loops in 1 second - for performance measurement
   {
     lastLoopReport = status.currentMillis;
@@ -59,7 +60,6 @@ void loop()
   loops++;
 
   can.handle();
-  pwmCtrl.handle();
 
   wota.handleWiFi();
   wota.handleOTA();

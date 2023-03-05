@@ -34,7 +34,11 @@ void CanBus::setup(class MqttPubSub &mqtt_client, Bytes2WiFi &wifiport, Bytes2Wi
     collectors[i]->onChange([](const char *name, int value, int min, int max, int samplesCollected, char *timestamp)
                             { 
                               status.collectors[settingsCollectors.getCollectorIndex(name)]=value;
-                              mqttClientCan->sendMessage(String(value), String(wifiSettings.hostname) + "/out/collectors/" + name); });
+                              mqttClientCan->sendMessage(String(value), String(wifiSettings.hostname) + "/out/collectors/" + name);
+                              mqttClientCan->sendMessage(String(min), String(wifiSettings.hostname) + "/out/collectors/" + name + "/min");
+                              mqttClientCan->sendMessage(String(max), String(wifiSettings.hostname) + "/out/collectors/" + name + "/max");
+                              mqttClientCan->sendMessage(String(samplesCollected), String(wifiSettings.hostname) + "/out/collectors/" + name + "/samplesCollected"); 
+                            });
     collectors[i]->setup();
   }
 }
@@ -88,26 +92,7 @@ void CanBus::handle()
   {
     lastMsgRcv = status.currentMillis;
     handleFrame(frame);
-    // switch (frame.id)
-    // {
-    //   // ISA IVT Shunt codes
-    // case 0x521:
-    // case 0x630:
-    //   handle521(frame); // U1
-    //   break;
-    // case 0x522:
-    // case 0x620:
-    //   handle522(frame); // I
-    //   break;
-    // case 0x680:
-    //   handle680(frame); // current counter
-    //   break;
-    // case 0x525:
-    //   handle525(frame);
-    // default:
-    //   break;
-    // }
-
+   
     // store message to buffer
     b2w->addBuffer(0xf1);
     b2w->addBuffer(0x00); // 0 = canbus frame sending
@@ -140,7 +125,7 @@ void getTimestamp(char *buffer)
     gettimeofday(&tv, NULL);
 
     microsec = tv.tv_usec;
-    strftime(buffer, 29, "%Y:%m:%d %H:%M:%S", &(status.timeinfo));
+    strftime(buffer, 29, "%Y-%m-%d %H:%M:%S", &(status.timeinfo));
     sprintf(buffer, "%s.%06d", buffer, microsec);
   }
 }
@@ -159,6 +144,9 @@ long CanBus::handleFrame(CAN_FRAME frame)
       break;
     case 0x522: // mV - U1 - 0x523, 0x524 for U2 and U3
       collectors[settingsCollectors.getCollectorIndex(VOLTAGE)]->handle((int)v, ts);
+      break;
+    case 0x523: // mV - U2
+      collectors[settingsCollectors.getCollectorIndex(VOLTAGE2)]->handle((int)v, ts);
       break;
     case 0x525: // 0.1 C degrees
       collectors[settingsCollectors.getCollectorIndex(TEMPERATURE)]->handle((int)v, ts);
@@ -202,24 +190,34 @@ void CanBus::setupGN02475()
     outframe.extended = 0; // Extended addresses  0=11-bit1=29bit
     outframe.rtr = 0;      // No request
     outframe.data.bytes[0] = (0x20 + i);
-    if (i == 2 || i == 3)
+    switch (i)
     {
+    case 2: //monitor voltage 2 for HV shunt
+      outframe.data.bytes[1] = 0x22; // all off
+      outframe.data.bytes[2] = 0x00; // interval
+      outframe.data.bytes[3] = 0x3c; // interval
+      break;
+    case 3:
       outframe.data.bytes[1] = 0x00; // all off
       outframe.data.bytes[2] = 0x00; // interval
       outframe.data.bytes[3] = 0x3c; // interval
-    }
-    else if (i == 4)
-    {
+      break;
+    case 4:
       outframe.data.bytes[1] = 0x22; // cyclic with errors
       outframe.data.bytes[2] = 0x00; // interval
       outframe.data.bytes[3] = 0x64; // interval
-    }
-    else if (i == 5 || i == 6 || i == 7)
-    {
+      break;
+    case 5:
+    case 6:
+    case 7:
       outframe.data.bytes[1] = 0x22; // cyclic with errors
       outframe.data.bytes[2] = 0x00; // interval
       outframe.data.bytes[3] = 0x1E; // interval
+      break;
+    default:
+      break;
     }
+
     outframe.data.bytes[4] = 0x00;
     outframe.data.bytes[5] = 0x00;
     outframe.data.bytes[6] = 0x00;

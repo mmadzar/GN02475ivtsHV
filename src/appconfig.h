@@ -13,6 +13,7 @@
 // IVTS shunt monitors
 #define CURRENT "current"
 #define VOLTAGE "voltage"
+#define VOLTAGE2 "voltage2"
 #define TEMPERATURE "temperature"
 #define POWER "power"
 #define POWER10 "power10" // 10 times in a second
@@ -42,7 +43,7 @@ struct Settings
   const gpio_num_t can0_tx = (gpio_num_t)22; // rev1 17; can0 transciever tx line
 
   CollectorConfig colBms[5] = {
-      {"ProtStatus", 500}, //protection status - error if >0
+      {"ProtStatus", 500}, // protection status - error if >0
       {"Temp1", 2000},
       {"Temp2", 2000},
       {"Temp3", 2000},
@@ -73,13 +74,14 @@ struct Settings
       {"Cell23", 5000},
       {"Cell24", 5000}};
 
-#define CollectorCount 7
+#define CollectorCount 8
   CollectorConfig collectors[CollectorCount] = {
       {CURRENT, 500},        // mA
       {VOLTAGE, 500},        // mV
+      {VOLTAGE2, 500},       // mV
       {TEMPERATURE, 500},    // 0.1 C degrees - Shunt temperature C degrees
       {POWER, 500},          // 1W
-      {POWER10, 100},          // 1W
+      {POWER10, 100},        // 1W
       {CURRENTCOUNTER, 500}, // 1As current counter
       {ENERGYCOUNTER, 500}}; // 1Wh energy counter
 

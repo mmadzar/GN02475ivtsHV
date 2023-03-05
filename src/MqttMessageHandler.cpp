@@ -8,13 +8,19 @@ void MqttMessageHandler::HandleMessage(const char *command, const char *message,
 {
   if (strcmp(command, "ivts") == 0)
     status.ivtsCommand = message;
-  else if (strcmp(command, "start") == 0)
-    status.running = true;
-  else if (strcmp(command, "stop") == 0)
-    status.running = false;
-  else if (strcmp(command, "interval") == 0)
-    intervals.serialInterval = String(message).toInt();
-  Serial.println(intervals.serialInterval);
+  else
+  {
+    for (size_t i = 0; i < SwitchCount; i++)
+    {
+      SwitchConfig *sc = &settings.switches[i];
+      // find switch in settings and set status value by index
+      if (strcmp(sc->name, command) == 0)
+      {
+        status.switches[i] = String(message).toInt();
+        break;
+      }
+    }
+  }
 }
 
 void MqttMessageHandler::callback(char *topic, byte *message, unsigned int length)

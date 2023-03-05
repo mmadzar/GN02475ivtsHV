@@ -16,9 +16,9 @@ void Switches::setup(MqttPubSub &mqtt_client)
     SwitchConfig *sc = &settings.switches[i];
     configs[i] = new SwitchConfig(sc->device, sc->name, sc->pin, sc->channel, sc->switchtype);
     devices[i] = new Switch(i, *configs[i]);
+    devices[i]->setup();
     devices[i]->onChange([](const char *name, devicet devicetype, int value)
                          { mqttClientSwitches->sendMessage(String(value), String(wifiSettings.hostname) + "/out/switches/" + name); });
-    devices[i]->setup();
   }
 }
 
