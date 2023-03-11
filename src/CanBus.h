@@ -26,6 +26,7 @@ private:
   void init();
   CAN_device_t CAN_cfg;    // CAN Config
   long previousMillis = 0; // last time a CAN Message was send
+  long lastSentCanLog = 0; // last time when logged CAN messages are sent over WiFi
   long handleFrame(CAN_FRAME frame);
 
   // find vars

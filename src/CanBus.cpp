@@ -110,8 +110,11 @@ void CanBus::handle()
       b2w->addBuffer(frame.data.uint8[c]);
     b2w->addBuffer(0x0a); // new line for SavvyCan and serial monitor
   }
-
-  // findCmd();
+  if (status.currentMillis - lastSentCanLog >= 100)
+  {
+    lastSentCanLog = status.currentMillis;
+    b2w->send();
+  }
 }
 
 void getTimestamp(char *buffer)
