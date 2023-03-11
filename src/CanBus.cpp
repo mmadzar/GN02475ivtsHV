@@ -1,6 +1,7 @@
 #include "CanBus.h"
 
 StaticJsonDocument<512> docJ;
+char tempBufferCan[512];
 CAN_FRAME frames[3];
 long displayValue = 0;
 int consumptionCounter = 0; // 0 - 65535(0xFFFF)
@@ -31,13 +32,18 @@ void CanBus::setup(class MqttPubSub &mqtt_client, Bytes2WiFi &wifiport, Bytes2Wi
     CollectorConfig *sc = &settings.collectors[i];
     configs[i] = new CollectorConfig(sc->name, sc->sendRate);
     collectors[i] = new Collector(*configs[i]);
-    collectors[i]->onChange([](const char *name, int value, int min, int max, int samplesCollected, char *timestamp)
+    collectors[i]->onChange([](const char *name, int value, int min, int max, int samplesCollected, uint64_t timestamp)
                             { 
                               status.collectors[settingsCollectors.getCollectorIndex(name)]=value;
-                              mqttClientCan->sendMessage(String(value), String(wifiSettings.hostname) + "/out/collectors/" + name);
-                              mqttClientCan->sendMessage(String(min), String(wifiSettings.hostname) + "/out/collectors/" + name + "/min");
-                              mqttClientCan->sendMessage(String(max), String(wifiSettings.hostname) + "/out/collectors/" + name + "/max");
-                              mqttClientCan->sendMessage(String(samplesCollected), String(wifiSettings.hostname) + "/out/collectors/" + name + "/samplesCollected"); 
+                              JsonObject root = docJ.to<JsonObject>();
+                              root["value"]=value;
+                              root["min"]=min;
+                              root["max"]=max;
+                              root["timestamp"]=timestamp;
+                              root["samples"]=samplesCollected;
+
+                              serializeJson(docJ, tempBufferCan);
+                              mqttClientCan->sendMessageToTopic(String(wifiSettings.hostname) + "/out/collectors/" + name, tempBufferCan);
                             });
     collectors[i]->setup();
   }
@@ -138,8 +144,7 @@ long CanBus::handleFrame(CAN_FRAME frame)
   if (frame.id >= 0x521 && frame.id <= 0x528)
   {
     const long v = (long)((frame.data.bytes[2] << 24) | (frame.data.bytes[3] << 16) | (frame.data.bytes[4] << 8) | (frame.data.bytes[5]));
-    char ts[29];
-    getTimestamp(ts);
+    uint64_t ts = status.getTimestampMicro();
     switch (frame.id)
     {
     case 0x521: // mA
